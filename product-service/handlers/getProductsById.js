@@ -1,4 +1,5 @@
-import productList from './productList.json'
+import productList from './productList.json';
+import { headers } from '../constants/headers';
 
 export const getProductsById = async event => {
   const { productId } = event.pathParameters;
@@ -7,13 +8,7 @@ export const getProductsById = async event => {
 
     return {
         statusCode: 200,
-        headers: {
-            // "Access-Control-Allow-Credentials" : true // Required for cookies, authorization headers with HTTPS
-            'Content-Type': 'application/json',
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept',
-            'Access-Control-Allow-Methods': 'POST, GET, OPTIONS, PATCH, PUT',
-        },
+        headers: headers,
         body: JSON.stringify(productList[productId]),
     };
   }

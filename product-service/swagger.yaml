@@ -19,7 +19,7 @@ paths:
               schema: 
                 type: array
                 items: 
-                  type: string
+                  $ref: '#/definitions/Product'
         '400':
           description: "Bad request"
   /products/{productId}:
@@ -32,9 +32,32 @@ paths:
           content:
             application/json:
               schema: 
-                type: object
-                items: 
-                  type: string
+                $ref: '#/definitions/Product'
         '404':
           description: "Product is not found"
+definitions:
+  Product:
+    type: object
+    required:
+    - id
+    - title
+    - description
+    - price
+    - count
+    properties:
+      id:
+        type: string
+        example: 7567ec4b-b10c-48c5-9345-fc73c48a80aa
+      title:
+        type: string
+        example: Product
+      description:
+        type: string
+        example: Product Description
+      price:
+        type: number
+        example: 10
+      count:
+        type: number
+        example: 4
                   
