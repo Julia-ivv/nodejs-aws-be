@@ -1,0 +1,63 @@
+openapi: 3.0.0
+info:
+  title: Online Fruit Stall API
+  description: API for Online Fruit Stall site.
+  version: 0.0.1
+servers:
+  - url: https://l6mg2h5d9g.execute-api.eu-west-1.amazonaws.com/dev/
+    description: Dev server for testing
+paths:
+  /products:
+    get:
+      summary: Returns a list of products.
+      description: Just a list of Products
+      responses:
+        '200':
+          description: A JSON array of products
+          content:
+            application/json:
+              schema: 
+                type: array
+                items: 
+                  $ref: '#/definitions/Product'
+        '400':
+          description: "Bad request"
+  /products/{productId}:
+    get:
+      summary: Returns a product by Index.
+      description: Returns a product by Index.
+      responses:
+        '200':
+          description: A JSON object of a product
+          content:
+            application/json:
+              schema: 
+                $ref: '#/definitions/Product'
+        '404':
+          description: "Product is not found"
+definitions:
+  Product:
+    type: object
+    required:
+    - id
+    - title
+    - description
+    - price
+    - count
+    properties:
+      id:
+        type: string
+        example: 7567ec4b-b10c-48c5-9345-fc73c48a80aa
+      title:
+        type: string
+        example: Product
+      description:
+        type: string
+        example: Product Description
+      price:
+        type: number
+        example: 10
+      count:
+        type: number
+        example: 4
+                  
