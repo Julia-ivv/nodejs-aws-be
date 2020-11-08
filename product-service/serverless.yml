@@ -7,7 +7,8 @@ provider:
   stage: dev
   region: eu-west-1
 
-plugins:
+plugins:  
+  - serverless-dotenv-plugin
   - serverless-webpack
 
 custom:
@@ -27,5 +28,11 @@ functions:
     events:
       - http:
           path: products/{productId}
-          method: get          
+          method: get
+  postProduct:
+    handler: handler.postProduct
+    events:
+      - http:
+          path: products
+          method: post       
 
