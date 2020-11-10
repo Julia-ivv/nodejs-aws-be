@@ -17,8 +17,6 @@ export const getProductsById = async event => {
 
   await client.connect();
   try {
-    // if (!product) throw new Error();
-
     const requestString = 
       `select p.id, p.title, p.description, p.price, p.image, s.count 
       from products p 
@@ -50,6 +48,6 @@ export const getProductsById = async event => {
     }
   }
   finally {
-    client.end();
+    await client.end();
   }
 };

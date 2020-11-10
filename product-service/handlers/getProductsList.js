@@ -31,6 +31,6 @@ export const getProductsList = async event => {
     }
   }
   finally {
-    client.end();
+    await client.end();
   }
 };

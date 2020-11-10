@@ -62,10 +62,9 @@ export const postProduct = async event => {
         return {
             statusCode: 500,
             body: JSON.stringify({message: "Internal Server Error"}),
-            // body: JSON.stringify(error),
         }
     }
     finally {
-        client.end();
+        await client.end();
     };
 }
