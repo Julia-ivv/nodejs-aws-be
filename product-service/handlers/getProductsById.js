@@ -7,6 +7,7 @@ export const getProductsById = async event => {
   const { productId } = event.pathParameters;
   const client = new Client(dbOptions);
 
+  console.log('Lambda getProductsById invocation with:', event)
   if (!validator.isUUID(productId)) 
     return {
       statusCode: 400,
@@ -34,6 +35,7 @@ export const getProductsById = async event => {
         body: JSON.stringify({message: "Product is not found"}),
     };
 
+    console.log('Lambda getProductsById execution successfully finished');
     return {
         statusCode: 200,
         headers: headers,
@@ -41,6 +43,7 @@ export const getProductsById = async event => {
     };
   }
   catch(error) {
+    console.log('Lambda getProductsById execution failed with error', error);
     return {
         statusCode: 500,
         body: JSON.stringify({message: "Internal Server Error"}),
