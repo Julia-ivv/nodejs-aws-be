@@ -10,7 +10,7 @@ const headers = {
 const BUCKET = 'julia-ivv-stall-import';
 
 module.exports = {
-    importProductsFile: async event => {
+    importProductsFile: async (event) => {
         try {
             const s3 = new S3({ region: 'eu-west-1', signatureVersion: 'v4' });
             const fileName = event.queryStringParameters.name;
@@ -20,50 +20,41 @@ module.exports = {
                 Expires: 60,
                 ContentType: 'text/csv'
             };
-
-            console.log('s3', s3);
-            console.log('fileName', fileName);
-            console.log('params', params);
         
             return await new Promise((resolve, reject) => {
-                s3.getSignedUrl('putObject', params, (err, url) => {
-                    if (err) {
-                        throw new Error();
+                s3.getSignedUrl('putObject', params, (error, url) => {
+                    if (error) {
+                        reject(new Error(error.message));
                     };
-                    console.log("signed URL", url);
+                    console.log('signed URL', url);
                     return resolve({
                         statusCode: 200,
                         headers: headers,
-                        body: url,
+                        body: JSON.stringify(url),
                     });
                 });
             });
         } catch(error) {
             return {
                 statusCode: 500,
-                body: JSON.stringify({message: "Internal Server Error"}),
+                body: JSON.stringify({message: 'Internal Server Error'}),
             }
         };
     },
-    importFileParser: async (event) => {
+    importFileParser: (event) => {
         try {
             const s3 = new S3({ region: 'eu-west-1', signatureVersion: 'v4' });
             event.Records.forEach(record => {
-                s3.getObject({
+                const s3Stream = s3.getObject({
                     Bucket: BUCKET,
                     Key: record.s3.object.key,
-                }).createReadStream()
-                    .on('error', (error) => {
-                        throw new Error(error);
-                    })
-                    .pipe(csv())
-                    .on('data', (data) => {
-                        console.log(data);
-                    })
-                    .on('error', (error) => {
-                        throw new Error(error);
-                    })
-                    .on('end', async () => {
+                }).createReadStream();
+
+                s3Stream.pipe(csv())
+                .on('data', (data) => { console.log(data) })
+                .on('error', (error) => { reject(new Error(error.message)) })
+                .on('end', async () => {
+                    try {
                         await s3.copyObject({
                             Bucket: BUCKET,
                             CopySource: BUCKET + '/' + record.s3.object.key,
@@ -73,16 +64,15 @@ module.exports = {
                             Bucket: BUCKET,
                             Key: record.s3.object.key
                         }).promise();
-                    });
+                    } catch(error) {
+                        console.log('error', error);
+                    }
+                });
             }); 
-            return {
-                statusCode: 200,
-                headers: headers,
-            }; 
         } catch(error) {
             return {
                 statusCode: 500,
-                body: JSON.stringify({message: "Internal Server Error"}),
+                body: JSON.stringify({message: 'Internal Server Error'}),
             }
         };
     }
