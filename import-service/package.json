@@ -1,0 +1,19 @@
+{
+  "name": "import-service",
+  "version": "0.0.1",
+  "description": "Import products for stall",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Julia Ivanova",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.792.0",
+    "csv-parser": "^2.3.3",
+    "json-loader": "^0.5.7"
+  },
+  "devDependencies": {
+    "jest": "^26.6.1"
+  }
+}
