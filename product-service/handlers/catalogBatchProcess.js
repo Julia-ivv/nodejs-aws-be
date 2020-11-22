@@ -24,12 +24,12 @@ export const catalogBatchProcess = async event => {
         allProducts = allProducts.filter((elem) => {
             return !(elem.error);
         });
-        
-        if (allProducts.length > 0) {
+
+        for (let product of allProducts) {
             await client.query('BEGIN');
             let requestString = `
                 insert into products (title, description, price, image) values
-                ${allProducts.map(product => `('${product.title}', '${product.description}', ${product.price}, '${product.image}')`).join(',')}
+                ('${product.title}', '${product.description}', ${product.price}, '${product.image}')
                 returning id;
             `;
             const newProduct = await client.query(requestString);
@@ -37,34 +37,25 @@ export const catalogBatchProcess = async event => {
             
             requestString = `
                 insert into stocks (product_id, count) values
-                ${newProduct.rows.map((elem, index) => `('${elem.id}', ${allProducts[index].count})`).join(', ')};
+                ('${newProduct.rows[0].id}', ${product.count})
             `;
             console.log('requestString', requestString);
             const newStock = await client.query(requestString);
             
             await client.query('COMMIT');
-        };
-      
-        allProducts.forEach(async (elem) => {
-            console.log('elem', elem);
-            console.log('sns-arn', process.env.SNS_ARN);
+
             const publishText = await sns.publish({
                 Subject: 'Product added to database',
-                Message: JSON.stringify(elem),
+                Message: JSON.stringify(product),
                 TopicArn: process.env.SNS_ARN
-            //}//, async (err, data) => {
-             //   if (err) console.log('error', err)
-             //   else console.log('success', data);
             }).promise();
-            // publishText
-            //     .then((data) => console.log("Sent message: "))
-            //     .catch((err) => console.log('error', err));
-        });
-        // return {
-        //     statusCode: 200,
-        //     headers: headers,
-        //     body: JSON.stringify({message: 'Completed successfully'}),
-        // };             
+        };
+
+        return {
+            statusCode: 200,
+            headers: headers,
+            body: JSON.stringify({message: 'Completed successfully'}),
+        };             
     } catch(error) {
         await client.query('ROLLBACK');
         console.log('error', error);
