@@ -6,6 +6,10 @@ provider:
   runtime: nodejs12.x
   stage: dev
   region: eu-west-1
+
+  environment:
+    SQS_URL: ${cf:product-service-${self:provider.stage}.SQSQueueUrl}
+
   iamRoleStatements:
     - Effect: "Allow"
       Action: "s3:ListBucket"
@@ -15,7 +19,11 @@ provider:
       Action: "s3:*"
       Resource:
         - "arn:aws:s3:::julia-ivv-stall-import/*"
-  
+    - Effect: Allow
+      Action: "sqs:*"
+      Resource:
+        - "${cf:product-service-${self:provider.stage}.SQSQueueArn}"
+
 functions:
   importProductsFile:
     handler: handler.importProductsFile
