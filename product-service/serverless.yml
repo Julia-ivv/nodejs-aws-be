@@ -36,6 +36,19 @@ resources:
         Protocol: email
         TopicArn:
           Ref: SNSTopic
+        FilterPolicy:
+          priceType: 
+            - expensive
+    SNSSubscription2:
+      Type: AWS::SNS::Subscription
+      Properties:
+        Endpoint: julia_sji85@mail.ru
+        Protocol: email
+        TopicArn:
+          Ref: SNSTopic
+        FilterPolicy:
+          priceType: 
+            - inexpensive
   Outputs:
     SQSQueueUrl:
       Value:

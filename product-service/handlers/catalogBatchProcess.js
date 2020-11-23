@@ -44,10 +44,17 @@ export const catalogBatchProcess = async event => {
             
             await client.query('COMMIT');
 
+            const priceType = (product.price < 100) ? 'inexpensive' : 'expensive';
             const publishText = await sns.publish({
                 Subject: 'Product added to database',
                 Message: JSON.stringify(product),
-                TopicArn: process.env.SNS_ARN
+                TopicArn: process.env.SNS_ARN,
+                MessageAttributes: {
+                    priceType: {
+                        DataType: 'String',
+                        StringValue: priceType,
+                    },
+                },
             }).promise();
         };
 
