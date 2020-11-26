@@ -1,5 +1,7 @@
 const S3 = require('aws-sdk/clients/s3');
+const SQS = require('aws-sdk/clients/sqs');
 const csv = require('csv-parser');
+// const csv = require('csvtojson');
 
 const headers = {
     'Content-Type': 'application/json',
@@ -41,18 +43,28 @@ module.exports = {
             }
         };
     },
-    importFileParser: (event) => {
+    importFileParser: async (event, context, callback) => {
         try {
             const s3 = new S3({ region: 'eu-west-1', signatureVersion: 'v4' });
-            event.Records.forEach(record => {
+            const sqs = new SQS();
+
+            event.Records.forEach(async (record) => {
                 const s3Stream = s3.getObject({
                     Bucket: BUCKET,
                     Key: record.s3.object.key,
                 }).createReadStream();
-
+                
                 s3Stream.pipe(csv())
-                .on('data', (data) => { console.log(data) })
-                .on('error', (error) => { reject(new Error(error.message)) })
+                .on('data', (data) => {
+                    console.log(data);
+                    sqs.sendMessage({
+                        QueueUrl: process.env.SQS_URL,
+                        MessageBody: JSON.stringify(data)
+                    }, (error) => {
+                        if (error) throw new Error(error.message);
+                    })
+                })
+                .on('error', (error) => { throw new Error(error.message) })
                 .on('end', async () => {
                     try {
                         await s3.copyObject({
@@ -66,9 +78,13 @@ module.exports = {
                         }).promise();
                     } catch(error) {
                         console.log('error', error);
-                    }
+                    };
                 });
             }); 
+            callback(null, {
+                statusCode: 200,
+                headers: { 'Access-Control-Allow-Origin': '*' }
+            });
         } catch(error) {
             return {
                 statusCode: 500,
