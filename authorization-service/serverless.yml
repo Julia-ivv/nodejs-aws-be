@@ -1,0 +1,27 @@
+service: authorization-service
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  stage: dev
+  region: eu-west-1
+
+resources:
+  Outputs:
+    basicAuthorizerArn:
+      Value:
+        Fn::GetAtt: [ BasicAuthorizerLambdaFunction, Arn ]
+
+plugins:  
+  - serverless-dotenv-plugin
+  - serverless-webpack
+
+custom:
+  webpack:
+    webpackConfig: 'webpack.config.js'
+    includeModules: true
+
+functions:
+  basicAuthorizer:
+    handler: handler.basicAuthorizer
