@@ -1,7 +1,6 @@
 const S3 = require('aws-sdk/clients/s3');
 const SQS = require('aws-sdk/clients/sqs');
 const csv = require('csv-parser');
-// const csv = require('csvtojson');
 
 const headers = {
     'Content-Type': 'application/json',
