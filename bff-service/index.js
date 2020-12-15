@@ -1,11 +1,10 @@
-const { response } = require('express');
 const express = require('express');
 require('dotenv').config();
 const axios = require('axios').default;
 
-const cacheObject = {
+let cacheObject = {
     data: [],
-    time: Date.now
+    valid_until: 0
 };
 
 const app = express();
@@ -14,40 +13,48 @@ const PORT = process.env.PORT || 3001;
 app.use(express.json());
 
 app.all('/*', (req, res) => {
-    console.log('original URL', req.originalUrl);
-    console.log('method', req.method);
-    console.log('body', req.body);
+    const originalUrl = req.originalUrl;
 
-    const recipient = req.originalUrl.split('/')[1];
-    console.log('recipient', recipient);
+    const recipient = originalUrl.split('/')[1];
 
     const recipientURL = process.env[recipient];
-    console.log('recipient URL', recipientURL);
 
-    if (recipientURL) {
-        const config = {
-            method: req.method,
-            url: `${recipientURL}${req.originalUrl}`,
-            ...(Object.keys(req.body || {}).length > 0 && {data: req.body})
-        };
-        console.log('axios config', config);
-
-        axios(config)
-            .then((response) => {
-                console.log('response', response.data);
-                res.json(response.data);
-            })
-            .catch((error) => {
-                console.log('error', JSON.stringify(error));;
-                if (error.response) {
-                    const { status, data } = error.response;
-                    res.status(status).json(data);
-                } else {
-                    res.status(500).json({ error: error.message });
-                }
-            });
+    if ((originalUrl === `/${process.env.CACHE_ENDPOINT}` || originalUrl === `/${process.env.CACHE_ENDPOINT}/`) 
+        && (req.method === process.env.CACHE_METHOD) 
+        && (cacheObject.data.length > 0)
+        && (Date.now() < cacheObject.valid_until)) { 
+            res.status(200).json(cacheObject.data);
     } else {
-        res.status(502).json({ error: 'Cannot process request' });
+        if (recipientURL) {
+            const config = {
+                method: req.method,
+                url: `${recipientURL}${originalUrl}`,
+                ...(Object.keys(req.body || {}).length > 0 && {data: req.body})
+            };
+
+            axios(config)
+                .then((response) => {
+                    if ((originalUrl === `/${process.env.CACHE_ENDPOINT}` || originalUrl === `/${process.env.CACHE_ENDPOINT}/`) 
+                        && (req.method === process.env.CACHE_METHOD)) {
+                            cacheObject.data = response.data;
+                            let date = new Date();
+                            date.setMinutes(date.getMinutes() + Number(process.env.CACHE_MINUTES)); 
+                            cacheObject.valid_until = +date;
+                        };
+                    res.json(response.data);
+                })
+                .catch((error) => {
+                    console.log('error', JSON.stringify(error));;
+                    if (error.response) {
+                        const { status, data } = error.response;
+                        res.status(status).json(data);
+                    } else {
+                        res.status(500).json({ error: error.message });
+                    }
+                });
+        } else {
+            res.status(502).json({ error: 'Cannot process request' });
+        }
     }
 })
 
